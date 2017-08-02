@@ -12,19 +12,6 @@ server.listen(httpport, function() {
   console.log('Http Server running on port: %d', httpport);
 });
 
-var httpsapp = https.createServer(ssl.options, server);
-/* 
-var io = require('socket.io')(httpsapp);
-
-io.on('connection', function(socket){
-  console.log('a user connected');
-  socket.on('disconnect', function(){
-    console.log('user disconnected');
-  });
-}); */
-    
-
-httpsapp.listen(httpsport,function(){
+ https.createServer(ssl.options, server).listen(httpsport,function(){
 	 console.log('Https Server running on port: %d', httpsport);
 });
-

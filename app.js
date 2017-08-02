@@ -37,7 +37,7 @@ var dateFormat = require('dateformat');
 var urltool = require('url');
 var _ = require('underscore');
 var fileUploader = require('express-fileupload');
-
+var router = require("./routers/messagerouter")
 
 
 
@@ -53,8 +53,7 @@ if (cloudantCredentials) {
 cloudantUrl = cloudantUrl || process.env.CLOUDANT_URL; // || '<cloudant_url>';
 var logs = null;
 var app = express();
-
-
+/*
 var logger = new(winston.Logger)({
     level :'debug',
     transports: [
@@ -72,13 +71,12 @@ var logger = new(winston.Logger)({
         })
     ]
 });
-
+*/
 //logging config
-var accessLogStream = fs.createWriteStream(path.join('./', 'access.log'), {
-    flags: 'a'
-})
 app.use(morgan('common', {
-    stream: accessLogStream
+    stream: fs.createWriteStream(path.join('./', 'access.log'), {
+        flags: 'a'
+    })
 }))
 
 // Bootstrap application settings
@@ -87,7 +85,7 @@ app.use(bodyParser.json({
     limit: '5mb'
 }));
 app.use(fileUploader());
-
+app.use('/api/message',router);
 // Create the service wrapper
 var conversation = watson.conversation({
     //url: 'https://gateway.watsonplatform.net/conversation/api',
@@ -149,12 +147,12 @@ app.get('/template',function(req,res){
     if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
 }
- 
+
     var img ='price_list.png'
 	      var respjson = '<!DOCTYPE html><html><head><meta name="description" content="Latest Travel Insurance Offer by Nexify"><title>Travel Insurance</title></head><body><img src="'+img+'"></body></html>'
         ;
 	res.send(respjson)
-	
+
 })
 
 // Endpoint on upload default
@@ -222,7 +220,7 @@ app.post('/opencase', function (req, res) {
 
 });
 
-// Endpoint to convert speech to text 
+// Endpoint to convert speech to text
 app.post('/api/speechtotext', function (req, res) {
     var postData = {
         "config": {
@@ -273,7 +271,7 @@ app.get('/geturl', function (req, res) {
     });
 
 })
-
+/*
 app.post('/api/message/chi', function (req, res) {
     var workspace = process.env.WORKSPACE_CHI_ID || '<workspace-id>';
     if (!workspace || workspace === '<workspace-id>') {
@@ -320,7 +318,8 @@ app.post('/api/message/chi', function (req, res) {
     });
 
 });
-
+*/
+/*
 app.post('/api/message/mandarin', function (req, res) {
     var workspace = process.env.WORKSPACE_MAN_ID || '<workspace-id>';
     if (!workspace || workspace === '<workspace-id>') {
@@ -367,10 +366,10 @@ app.post('/api/message/mandarin', function (req, res) {
     });
 
 });
-
+*/
 
 app.post('/gencase',function(req,res){
-	
+
  var data =req.body;
  console.log(data);
 var url='http://161.202.198.106:9080/ChatAcmService/acm/StartCaseWf?to='+data.location+'&dpt='+data.dpt+'&rtn='+data.rtn+'&adult='+data.adult+'&child='+data.kid+'&seat='+data.seat+'&hotel='+data.hotel+'&in='+data.dpt+'&out='+data.rtn+'&hadt='+data.adult+'&hchd='+data.kid+'&room='+data.room
@@ -385,6 +384,7 @@ var url='http://161.202.198.106:9080/ChatAcmService/acm/StartCaseWf?to='+data.lo
     });
 })
 
+/*
 // Endpoint to be call from the client side
 app.post('/api/message', function (req, res) {
     var workspace = process.env.WORKSPACE_ID || '<workspace-id>';
@@ -430,7 +430,7 @@ app.post('/api/message', function (req, res) {
         return res.json(updateMessage(payload, data));
     });
 });
-
+*/
 /**
  * Updates the response text using the intent confidence
  * @param  {Object} input The request to the Conversation service
