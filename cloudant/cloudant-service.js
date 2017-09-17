@@ -5,29 +5,35 @@ var cloudantUrl = process.env.CLOUDANT_URL; // || '<cloudant_url>';
 var logger = require('./../logger/logger');
 var nano = require('nano')(cloudantUrl);
 module.exports = {
-    insertdata: function (db, data, res) {
+    insertdata: function (db, data) {
+        console.log(data);
         nano.db.get(db, function (err) {
             if (err) {
-                logger.error(err);
+                console.error(err);
                 nano.db.create(db, function (err, body) {
                     if (!err) {
-                        logger.log('database is created!');
-                        nano.db.use(db).insert(data, data.title, function (err, body) {
+                        console.log('database is created!');
+                        var dbinstance = nano.use(db);
+                        console.log(dbinstance);
+                        dbinstance.insert(data, function (err, body) {
                             if (!err) {
-                                logger.log(body);
-                                res.send(body);
+                                console.log(body);
+                                return body;
                             }
                         });
                     }
                 });
-            } else
-                nano.db.use(db).insert(data, data.title, function (err, body) {
-                    if (!err) {
-                        logger.log(body);
-                        res.send(body);
+            } else {
+                var dbinstance = nano.use(db);
+                dbinstance.insert({data}, function (err, body) {
+                    console.log(err);
+                        if (!err) {
+                            console.log(body);
+                            return body;
+                        }
                     }
-                });
-
+                );
+            }
         });
     }
 };

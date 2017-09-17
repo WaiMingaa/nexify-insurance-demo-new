@@ -180,7 +180,25 @@ chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $
     submitform = function (...l
 )
     {
+        var promise = function (){
+            var deferred = $q.defer();
+            var list = [...l
+        ]
+            ;
+            var title = list[0];
+            var vlist = [];
+            list = list.slice(1, list.length);
+            list.forEach(function (i) {
+                var the_string = i.id;
+                var the_value = i.value;
+                /* var model = $parse(the_string);
+                 var v= model.assign($scope, i.value);*/
+                vlist.push({id: the_string, value: the_value});
 
+            });
+            deferred.resolve({'title':title,'list':vlist});
+            return deferred.promise;
+        };
         /* sendByButton('表格已經傳送');
          MessageBuilder.build(PipelineService.buildBotJSON(new Promise(function () {
              return "多謝你的資料，我們將儘快處理。"
@@ -188,43 +206,16 @@ chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $
              _dialog.addDialog(dialog);
          });
  */
-        var list = [...l
-    ]
-        ;
-        var data = new FormData();
-        var title = list[0].id;
-        // console.log(title);
-        var vlist = [];
-        list = list.slice(1, list.length - 1);
-        list.forEach(function (i) {
-            var the_string = i.id;
-            var the_value = i.value;
-            /* var model = $parse(the_string);
-             var v= model.assign($scope, i.value);*/
-            vlist.push({id: the_string, value: the_value});
-            /*    var postjson ={
-                    location :'Chicago',
-                    dpt:$scope.from,
-                    rtn:$scope.to,
-                    adult:$scope.adultno,
-                    kid:$scope.kidno,
-                    seat:'Economy',
-                    hotel:$scope.hotelname,
-                    room:$scope.bed
-                };*/
-            /* if($scope.from&&$scope.to&&$scope.adultno&&$scope.kidno&&$scope.hotelname&&$scope.bed){
-               GencaseService.gencase(postjson).then(function(res){
-                 console.log(res.data);
-                   $scope.casenumber=res.data.casenumber;
-               })
-                 }*/
-        });
-        data.append('title', title);
-        data.append('list', vlist);
+        promise().then(function(data){
+            console.log(data);
         $http({
             method: 'POST',
             url: '/form',
-            data: data
+            data:data,
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Content-Type': 'application/json'
+            }
         }).then(function (res) {
             sendByButton('表格已經傳送');
             MessageBuilder.build(PipelineService.buildBotJSON(new Promise(function () {
@@ -232,6 +223,7 @@ chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $
             }))).then(function (dialog) {
                 _dialog.addDialog(dialog);
             });
+        })
         })
     }
 

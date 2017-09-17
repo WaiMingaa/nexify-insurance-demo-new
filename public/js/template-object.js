@@ -78,14 +78,15 @@ var templateObject = (function () {
     str += "</div>"
 
     function _buildForm(content) {
-        var title = content.title;
+        var title = "'"+content.title+"'";
         var str = '';
         var component = ''
         var listofid = [];
         content.items.forEach(function (item) {
             if (item.type == "select") {
                 listofid.push(item.id);
-                str += "          <div id=\""+title+"\" class=\"ui selection dropdown\">";
+                //str += "          <div id=\""+title+"\" class=\"ui selection dropdown\">";
+                str += "          <div class=\"ui selection dropdown\">";
                 str += '          <input type=\"hidden\"   id=' + "\"" + item.id + "\"" + '   ng-model=' + "\"" + item.id + "\"" + ' >'
                 str += "          <i class=\"dropdown icon\"><\/i>";
                 str += "          <div class=\"default text\">" + item.name + "<\/div>"
@@ -109,7 +110,7 @@ var templateObject = (function () {
         })
         var form_object = listofid;
         form_object.unshift(title);
-        str += "<div><button onClick=\"submitform("+listofid+")\" class=\"ui button\">";
+        str += "<div><button onClick=\"submitform("+form_object+")\" class=\"ui button\">";
         str += "  提交";
         str += "<\/button></div>";
         return '<div class=\"ui fluid segment\" ">' + str + '</div>';
