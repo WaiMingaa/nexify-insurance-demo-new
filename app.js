@@ -5,6 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -27,31 +28,33 @@ var watson = require('watson-developer-cloud'); // watson sdk
 // The following requires are needed for logging purposes
 var uuid = require('uuid');
 var fs = require('fs');
-var cheerio = require('cheerio')
-var morgan = require('morgan');
-var winston = require('winston');
+var cheerio = require('cheerio');
+var logger = require('./logger/logger');
+var httplogger =require('./logger/http-logger');
+//var morgan = require('morgan');
+//var winston = require('winston');
 var request = require('request');
 var vcapServices = require('vcap_services');
 var basicAuth = require('basic-auth-connect');
-var dateFormat = require('dateformat');
+//var dateFormat = require('dateformat');
 var urltool = require('url');
 var _ = require('underscore');
 var fileUploader = require('express-fileupload');
-var router = require("./routers/messagerouter")
-
-
+var message_router = require('./routers/message-router');
+var img_upload_router=require('./routers/upload-img-router');
+var form_router = require('./routers/form-router');
 
 // The app owner may optionally configure a cloudand db to track user input.
 // This cloudand db is not required, the app will operate without it.
 // If logging is enabled the app must also enable basic auth to secure logging
 // endpoints
-var cloudantCredentials = vcapServices.getCredentials('cloudantNoSQLDB');
+/*var cloudantCredentials = vcapServices.getCredentials('cloudantNoSQLDB');
 var cloudantUrl = null;
 if (cloudantCredentials) {
     cloudantUrl = cloudantCredentials.url;
 }
 cloudantUrl = cloudantUrl || process.env.CLOUDANT_URL; // || '<cloudant_url>';
-var logs = null;
+var logs = null;*/
 var app = express();
 /*
 var logger = new(winston.Logger)({
@@ -72,12 +75,8 @@ var logger = new(winston.Logger)({
     ]
 });
 */
-//logging config
-app.use(morgan('common', {
-    stream: fs.createWriteStream(path.join('./', 'access.log'), {
-        flags: 'a'
-    })
-}))
+//logging
+app.use(httplogger);
 
 // Bootstrap application settings
 app.use(express.static('./public')); // load UI from public folder
@@ -85,10 +84,11 @@ app.use(bodyParser.json({
     limit: '5mb'
 }));
 app.use(fileUploader());
-app.use('/api/message',router);
+app.use('/api/message',message_router);
+// submit form
+app.use('/form',form_router);
 // Create the service wrapper
-var conversation = watson.conversation({
-    //url: 'https://gateway.watsonplatform.net/conversation/api',
+/*var conversation = watson.conversation({
     username: process.env.CONVERSATION_USERNAME || '<username>',
     password: process.env.CONVERSATION_PASSWORD || '<password>',
     version_date: '2016-07-11',
@@ -104,34 +104,31 @@ var visual_recognition = watson.visual_recognition({
     api_key: process.env.VISUAL_RECOGNITION_API_KEY_CLAIM|| '{api_key}',
     version: 'v3',
     version_date: '2016-05-19'
-});
+});*/
 
+//Endpoint on service file
+app.use('/upload',img_upload_router);
+app.get("/template", express.static('./templatepage/template.html'));
+//app.post('/default',imgUpoader);
+//app.post('uploadclaim',imgUpoader);
 
 /*
-var tone_analyzer = watson.tone_analyzer({
-    username: process.env.TONE_USERNAME || '<username>',
-    password: process.env.TONE_PASSWORD || '<username>',
-    version: 'v3',
-    version_date: '2016-05-19'
-});
-*/
-
-// Endpoint on upload file
+// Endpoint on service file
 app.post('/uploadclaim', function (req, res) {
     var pic = req.files.file
-    var dir = './upload/';
+    var dir = './service/';
 
 if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
 }
-    pic.mv('./upload/' + pic.name, function (err) {
+    pic.mv('./service/' + pic.name, function (err) {
         if (err) {
             console.log(err)
             return res.status(500).send(err);
         }
         var params = {
             classifier_ids: process.env.CLAIM_CLASSIFIER,
-            images_file: fs.createReadStream('./upload/' + pic.name)
+            images_file: fs.createReadStream('./service/' + pic.name)
         };
         visual_recognition.classify(params, function (err, response) {
             if (err)
@@ -141,7 +138,8 @@ if (!fs.existsSync(dir)){
         });
     });
 })
-app.use("/template", express.static('./img'));
+app.use("/template", express.static('./templatepage/template.html'));
+/!*
 app.get('/template',function(req,res){
     var dir = './img/';
     if (!fs.existsSync(dir)){
@@ -154,8 +152,9 @@ app.get('/template',function(req,res){
 	res.send(respjson)
 
 })
+*!/
 
-// Endpoint on upload default
+// Endpoint on service default
 app.post('/default', function (req, res) {
     var pic = req.files.file
         var dir = './default/';
@@ -181,9 +180,9 @@ if (!fs.existsSync(dir)){
     });
 })
 
-// Endpoint on upload landmark
+// Endpoint on service landmark
 app.post('/uploadlandmark', function (req, res) {
-    var pic = req.files.file
+        var pic = req.files.file
         var dir = './uploadlandmark/';
 
 if (!fs.existsSync(dir)){
@@ -207,6 +206,7 @@ if (!fs.existsSync(dir)){
         });
     });
 })
+*/
 
 //Endpoint to open case
 app.post('/opencase', function (req, res) {
@@ -437,7 +437,7 @@ app.post('/api/message', function (req, res) {
  * @param  {Object} response The response from the Conversation service
  * @return {Object}          The response with the updated message
  */
-function updateMessage(input, response) {
+/*function updateMessage(input, response) {
     var responseText = null;
     var id = null;
     if (!response.output) {
@@ -482,9 +482,9 @@ function updateMessage(input, response) {
         });
     }
     return response;
-}
+}*/
 
-if (cloudantUrl) {
+/*if (cloudantUrl) {
     // If logging has been enabled (as signalled by the presence of the cloudantUrl) then the
     // app developer must also specify a LOG_USER and LOG_PASS env vars.
     if (!process.env.LOG_USER || !process.env.LOG_PASS) {
@@ -577,6 +577,6 @@ if (cloudantUrl) {
             res.csv(csv);
         });
     });
-}
+}*/
 
 module.exports = app;

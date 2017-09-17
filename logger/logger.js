@@ -1,4 +1,6 @@
 var winston = require('winston');
+var dateFormat = require('dateformat');
+
 var logger = new(winston.Logger)({
     level :'debug',
     transports: [

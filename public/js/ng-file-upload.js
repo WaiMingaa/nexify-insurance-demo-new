@@ -76,7 +76,7 @@ ngFileUpload.service('UploadBase', ['$http', '$q', '$timeout', function ($http, 
             e.config = config;
             notifyProgress(getNotifyEvent(e));
           }, false);
-          //fix for firefox not firing upload progress end, also IE8-9
+          //fix for firefox not firing service progress end, also IE8-9
           xhr.upload.addEventListener('load', function (e) {
             if (e.lengthComputable) {
               e.config = config;
@@ -275,7 +275,7 @@ ngFileUpload.service('UploadBase', ['$http', '$q', '$timeout', function ($http, 
           formData.append(key, file, file.ngfName || file.name);
         } else {
           if (angular.isObject(val)) {
-            if (val.$$ngfCircularDetection) throw 'ngFileUpload: Circular reference in config.data. Make sure specified data for Upload.upload() has no circular reference: ' + key;
+            if (val.$$ngfCircularDetection) throw 'ngFileUpload: Circular reference in config.data. Make sure specified data for Upload.service() has no circular reference: ' + key;
 
             val.$$ngfCircularDetection = true;
             try {
@@ -790,7 +790,7 @@ ngFileUpload.directive('ngfSelect', ['$parse', '$timeout', '$compile', 'Upload',
 
       var fileElem = angular.element('<input type="file">');
 
-      var label = angular.element('<label>upload</label>');
+      var label = angular.element('<label>service</label>');
       label.css('visibility', 'hidden').css('position', 'absolute').css('overflow', 'hidden')
         .css('width', '0px').css('height', '0px').css('border', 'none')
         .css('margin', '0px').css('padding', '0px').attr('tabindex', '-1');

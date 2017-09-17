@@ -3,7 +3,7 @@
 'use strict';
 
 var server = require('./app');
-var ssl = require('./sslLicense');
+var ssl = require('./ssl-license');
 var https = require('https');
 var httpport = process.env.PORT || process.env.VCAP_APP_PORT || 8080;
 var httpsport =8081;
