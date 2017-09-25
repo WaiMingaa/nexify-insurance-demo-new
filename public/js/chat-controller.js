@@ -3,6 +3,7 @@ var chatapp = angular.module('chatApp', ['ngFileUpload', 'ngSanitize']);
 chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $compile, $http, $sce, LangHandler, MessageBuilder, PipelineService, MessageConnector, TimeHandler, ConversationHandler, Upload, $q) {
     /*********init soundRecorder*********/
     soundRecorder.init(function (rate) {
+        $scope.casenumber = Math.floor(Math.random() * 90000) + 10000;
         $scope.rate = rate;
     }, function (media) {
         $scope.media = !!media;
@@ -49,6 +50,7 @@ chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $
 
     /***** function associated with refresh button *****/
     $scope.reset = function () {
+        $scope.casenumber = Math.floor(Math.random() * 90000) + 10000;
         _dialog.reset();
         ConversationHandler.reset();
         MessageConnector.sendNormalRequest('');
@@ -69,7 +71,7 @@ chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $
                 })
             });
             console.log(imageRecongnition.getUrl());
-            var uploadurl = '/upload/default';
+            var uploadurl = '/upload/landmark';
             Upload.upload({
                 url: imageRecongnition.getUrl(),
                 data: {
@@ -180,7 +182,7 @@ chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $
     submitform = function (...l
 )
     {
-        var promise = function (){
+        var promise = function () {
             var deferred = $q.defer();
             var list = [...l
         ]
@@ -196,7 +198,7 @@ chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $
                 vlist.push({id: the_string, value: the_value});
 
             });
-            deferred.resolve({'title':title,'list':vlist});
+            deferred.resolve({'title': title, 'list': vlist});
             return deferred.promise;
         };
         /* sendByButton('表格已經傳送');
@@ -206,24 +208,24 @@ chatapp.controller('ChatController', function ($scope, $parse, GencaseService, $
              _dialog.addDialog(dialog);
          });
  */
-        promise().then(function(data){
+        promise().then(function (data) {
             console.log(data);
-        $http({
-            method: 'POST',
-            url: '/form',
-            data:data,
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Content-Type': 'application/json'
-            }
-        }).then(function (res) {
-            sendByButton('表格已經傳送');
-            MessageBuilder.build(PipelineService.buildBotJSON(new Promise(function () {
-                return "多謝你的資料，我們將儘快處理。"
-            }))).then(function (dialog) {
-                _dialog.addDialog(dialog);
-            });
-        })
+            $http({
+                method: 'POST',
+                url: '/form',
+                data: data,
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'application/json'
+                }
+            }).then(function (res) {
+                sendByButton('表格已經傳送');
+                MessageBuilder.build(PipelineService.buildBotJSON(new Promise(function () {
+                    return "多謝你的資料，我們將儘快處理。"
+                }))).then(function (dialog) {
+                    _dialog.addDialog(dialog);
+                });
+            })
         })
     }
 
@@ -320,11 +322,13 @@ chatapp.service('PipelineService', function ($q, ConversationHandler) {
         var jlist = [];
         promise.then(function (response) {
             ConversationHandler.setResponseParam(response);
-            response.data.output.text.forEach(function (text) {
-                if (_voiceswitch)
-                    responsiveVoice.speak(text, 'Chinese (Hong Kong) Female');
-                jlist.push(_getBotJson(text));
-            });
+            if (response.data.context.order > 0) {
+                response.data.output.text.forEach(function (text) {
+                    if (_voiceswitch)
+                        responsiveVoice.speak(text, 'Chinese (Hong Kong) Female');
+                    jlist.push(_getBotJson(text));
+                });
+            }
             if (response.data.context.event) {
                 response.data.context.event.forEach(function (e) {
                     if (e.side == "user")
@@ -332,7 +336,13 @@ chatapp.service('PipelineService', function ($q, ConversationHandler) {
                     else
                         jlist.push(_getBotJson(_buildEvent(e)));
                 })
-
+            }
+            if (!response.data.context.order > 0) {
+                response.data.output.text.forEach(function (text) {
+                    if (_voiceswitch)
+                        responsiveVoice.speak(text, 'Chinese (Hong Kong) Female');
+                    jlist.push(_getBotJson(text));
+                });
             }
             deferred.resolve(jlist);
         });
@@ -415,7 +425,6 @@ chatapp.service('ConversationHandler', function () {
         output: {}
     };
     this.getNewReqPayload = function () {
-
         return {
             context: {},
             input: {}
